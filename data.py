@@ -2,8 +2,10 @@ from conf import conf, input_dimensions
 import spacy
 import os
 import logging as log
-
-
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
+from sklearn.preprocessing import LabelBinarizer
 
 def preprocess(sentence, experiment, nlp):
     doc = nlp(sentence)
@@ -35,9 +37,9 @@ def read_file(data_file):
         try:
             sentence, label = line.strip().split("\t")
             sentences.append(sentence)
-            labels.append(labels)
+            labels.append(label)
         except:
-            log.warning("error reading line {0} of file {1}".format(len(sentences), training_file)),
+            log.warning("error reading line {0} of file {1}".format(len(sentences), data_file)),
     log.info("read {0} instances".format(len(sentences)))
     return sentences, labels
 
@@ -55,13 +57,13 @@ def read_preprocessed_file(data_file):
         if line.startswith("<label>"):
             label = line.strip().replace("<label>", "")
             labels.append(label)
-        elif len(line.strip()) > 0:
+        elif line != "\n":
             tokens.append(line.strip())
         else:
             sentences.append(tokens)
             tokens = []
 
-    log.info("read {0} instances".format(len(sentences)))
+    log.info("read {0} instances ({1} labels)".format(len(sentences), len(labels)))
     return sentences, labels
 
 def load_data(experiment):
@@ -79,18 +81,38 @@ def load_data(experiment):
             log.error("error reading file {0}, exiting".format(training_file))
         log.info("preprocessing the sentences")
         nlp = spacy.load(experiment["language"], disable=["ner", "pos", "parser"])
-        sentences_preprocessed = [preprocess(sentence, experiment, nlp) for sentence in sentences]
+
+        try:
+            sentences_preprocessed = [preprocess(sentence, experiment, nlp) for sentence in sentences]
+        except:
+            sentences_preprocessed = []
         log.info("writing preprocessed training set file")
         with open(training_preprocessed_file, "w") as fo:
             for sentence_preprocessed, label in zip(sentences_preprocessed, labels):
+
                 fo.write("<label>{0}\n".format(label))
                 for token in sentence_preprocessed:
                     fo.write("{0}\n".format(token))
                 fo.write("\n")
 
-    log.info("building vocabulary")
-    vocabulary = build_vocabulary(sentences_preprocessed, experiment)
-
     log.info("vectorization")
-    # TODO
-    return vocabulary
+    tokenizer = Tokenizer(filters='', lower=True, split=' ')
+    tokenizer.fit_on_texts(sentences_preprocessed)
+    #sequences = tokenizer.texts_to_sequences(sentences_preprocessed)
+    word_index = tokenizer.word_index
+
+    if experiment["wordrepresentation"] == 'tfidf':
+        # one-hot encoding with TF-IDF weighting (for simple NNs)
+        X_data = tokenizer.texts_to_matrix(sentences_preprocessed, mode='tfidf')
+        X_data = pad_sequences(X_data, 8000, padding='post', truncating='post')
+    elif experiment["wordrepresentation"] == 'embedding_train':
+        # numeric encoding and padding with TF-IDF weighting (for embedding-based NNs)
+        X_data = tokenizer.texts_to_sequences(sentences_preprocessed)
+        X_data = pad_sequences(X_data, 140)
+
+
+    encoder = LabelBinarizer()
+    encoder.fit(labels)
+    y_data = to_categorical(encoder.transform(labels))
+
+    return X_data, y_data, word_index

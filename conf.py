@@ -10,9 +10,16 @@ input_dimensions = {
 experiments = {
     "test": {
         "data": "test",
-        "language": "en",
+        "language": "it",
         "classes": ["0","1"],
         "model": "lstm",
         "preprocess": "lemma",
-        "wordrepresentation": "train"}
+        "wordrepresentation": "embedding_train"},
+    "test_balanced": {
+        "data": "test_balanced",
+        "language": "it",
+        "classes": ["0","1"],
+        "model": "lstm",
+        "preprocess": "lemma",
+        "wordrepresentation": "embedding_train"}
 }
