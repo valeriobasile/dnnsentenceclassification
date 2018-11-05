@@ -55,13 +55,12 @@ if experiment["model"] == "nn":
     model.add(Dense(y_data.shape[1], activation='softmax'))
 elif experiment["model"] == "lstm":
     model = Sequential()
-    model.add(Embedding(len(word_index)+1, 100, input_shape=(140,)))
-    model.add(Bidirectional(LSTM(128, return_sequences=True)))
-    model.add(Dropout(0.3))
-    #model.add(MaxPooling1D())
-    model.add(Bidirectional(LSTM(64)))
-    model.add(Dropout(0.3))
-    model.add(ActivityRegularization(l1=0.01, l2=0.001))
+    model.add(Embedding(len(word_index)+1, 256, input_shape=(140,)))
+    model.add(Bidirectional(LSTM(256, return_sequences=True)))
+    model.add(Dropout(0.5))
+    model.add(Bidirectional(LSTM(128)))
+    model.add(Dropout(0.5))
+    model.add(ActivityRegularization(l1=0.001, l2=0.0005))
     model.add(Dense(y_data.shape[1], activation='softmax'))
 
 model.summary()
@@ -69,7 +68,7 @@ model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['acc'])
 
-callbacks = [EarlyStopping(monitor='val_loss', patience=2),
+callbacks = [EarlyStopping(monitor='val_loss', patience=1),
              ModelCheckpoint(filepath='best_model.h5', monitor='val_loss', save_best_only=True)]
 
 history = model.fit(X_train, y_train,
@@ -86,6 +85,6 @@ gold = [np.argmax(i) for i in y_test]
 p0, r0, f0 = precision_recall(pred, gold, 0)
 p1, r1, f1 = precision_recall(pred, gold, 1)
 macrof = (f0+f1)/2.0
-print (p0, r0, f0)
-print (p1, r1, f1)
-print (macrof)
+print (p0, p1, r0, r1, f0, f1)
+print ("macro F1-score: {0:.3f}".format(macrof))
+print ("accuracy: {0:.3f}".format(score[1]))
