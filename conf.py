@@ -14,12 +14,12 @@ experiments = {
         "classes": ["0","1"],
         "model": "lstm",
         "preprocess": "lemma",
-        "wordrepresentation": "embedding_train"},
+        "wordrepresentation": "embedding"},
     "test_balanced": {
         "data": "test_balanced",
         "language": "it",
         "classes": ["0","1"],
         "model": "lstm",
         "preprocess": "lemma",
-        "wordrepresentation": "embedding_train"}
+        "wordrepresentation": "embedding"}
 }

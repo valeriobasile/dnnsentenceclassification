@@ -10,6 +10,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
+from gensim.models import KeyedVectors
+from gensim.models.wrappers import FastText
 
 seed = 7
 np.random.seed(seed)
@@ -44,6 +46,31 @@ print (X_data.shape)
 print (y_data.shape)
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=seed)
 
+# pre trained embedding
+log.info("loading embeddings")
+embeddings_index = {}
+f = open('wiki.it.vec')
+for line in f:
+    values = line.strip().split()
+    if len(values)<=2:
+        continue
+    word = " ".join(values[:-300])
+    coefs = np.asarray(values[-300:], dtype='float32')
+    embeddings_index[word.lower().strip()] = coefs
+f.close()
+# f = open("wiki.it.bin", encoding="latin1")
+# wv_from_bin = KeyedVectors.load_word2vec_format(f, binary=False)
+# f.close()
+#model = FastText.load_fasttext_format('wiki.it')
+#print(model.wv['casa'])
+
+embedding_matrix = np.zeros((len(word_index) + 1, 300))
+for word, i in word_index.items():
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        # words not found in embedding index will be all-zeros.
+        embedding_matrix[i] = embedding_vector
+
 if experiment["model"] == "nn":
     model = Sequential()
     model.add(Dense(100, input_shape=(X_data.shape[1],)))
@@ -55,12 +82,14 @@ if experiment["model"] == "nn":
     model.add(Dense(y_data.shape[1], activation='softmax'))
 elif experiment["model"] == "lstm":
     model = Sequential()
-    model.add(Embedding(len(word_index)+1, 256, input_shape=(140,)))
-    model.add(Bidirectional(LSTM(256, return_sequences=True)))
+    model.add(Embedding(len(word_index)+1, 300, weights=[embedding_matrix], trainable=False, input_length=140))
+    #model.add(Embedding(len(word_index)+1, 256, input_shape=(140,)))
+    #model.add(Bidirectional(LSTM(64, return_sequences=True)))
+    model.add(Bidirectional(LSTM(256)))
     model.add(Dropout(0.5))
-    model.add(Bidirectional(LSTM(128)))
-    model.add(Dropout(0.5))
-    model.add(ActivityRegularization(l1=0.001, l2=0.0005))
+    #model.add(Bidirectional(LSTM(32)))
+    #model.add(Dropout(0.5))
+    model.add(ActivityRegularization(l1=0.001, l2=0.001))
     model.add(Dense(y_data.shape[1], activation='softmax'))
 
 model.summary()

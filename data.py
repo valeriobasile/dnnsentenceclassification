@@ -102,13 +102,12 @@ def load_data(experiment):
     word_index = tokenizer.word_index
 
     if experiment["wordrepresentation"] == 'tfidf':
-        # one-hot encoding with TF-IDF weighting (for simple NNs)
         X_data = tokenizer.texts_to_matrix(sentences_preprocessed, mode='tfidf')
         X_data = pad_sequences(X_data, 8000, padding='post', truncating='post')
-    elif experiment["wordrepresentation"] == 'embedding_train':
-        # numeric encoding and padding with TF-IDF weighting (for embedding-based NNs)
+    elif experiment["wordrepresentation"] == 'embedding':
         X_data = tokenizer.texts_to_sequences(sentences_preprocessed)
         X_data = pad_sequences(X_data, 140)
+
 
 
     encoder = LabelBinarizer()
