@@ -11,15 +11,19 @@ experiments = {
     "test": {
         "data": "test",
         "language": "it",
-        "classes": ["0","1"],
         "model": "lstm",
         "preprocess": "lemma",
-        "wordrepresentation": "embedding"},
-    "test_balanced": {
-        "data": "test_balanced",
+        "wordrepresentation": "embedding",
+        "embedding_dimension": 300,
+        "embedding_file": "wiki.multi.it.vec",
+        "max_length": 100},
+    "test_progressive": {
+        "data": "test",
         "language": "it",
-        "classes": ["0","1"],
         "model": "lstm",
         "preprocess": "lemma",
-        "wordrepresentation": "embedding"}
+        "wordrepresentation": "embedding",
+        "embedding_dimension": 300,
+        "embedding_file": "wiki.it.vec",
+        "max_length": 100},
 }

@@ -6,6 +6,11 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+seed = 7
+np.random.seed(seed)
 
 def preprocess(sentence, experiment, nlp):
     doc = nlp(sentence)
@@ -66,19 +71,18 @@ def read_preprocessed_file(data_file):
     log.info("read {0} instances ({1} labels)".format(len(sentences), len(labels)))
     return sentences, labels
 
-def load_data(experiment):
+def read_data_file(experiment, set):
+    # read and preprocess the data
     data_dir = os.path.join(conf["data_dir"], experiment["data"])
-
-
-    training_preprocessed_file = os.path.join(data_dir, "train_preprocessed.tsv")
-    if os.path.isfile(training_preprocessed_file):
-        log.info("training file is already preprocessed, reading from {0}".format(training_preprocessed_file))
-        sentences_preprocessed, labels = read_preprocessed_file(training_preprocessed_file)
+    preprocessed_file = os.path.join(data_dir, "{0}_preprocessed.tsv".format(set))
+    if os.path.isfile(preprocessed_file):
+        log.info("{0} set file is already preprocessed, reading from {1}".format(set, preprocessed_file))
+        sentences_preprocessed, labels = read_preprocessed_file(preprocessed_file)
     else:
-        training_file = os.path.join(data_dir, "train.tsv")
-        sentences, labels = read_file(training_file)
+        data_file = os.path.join(data_dir, "{0}.tsv".format(set))
+        sentences, labels = read_file(data_file)
         if sentences == None:
-            log.error("error reading file {0}, exiting".format(training_file))
+            log.error("error reading file {0}, exiting".format(data_file))
         log.info("preprocessing the sentences")
         nlp = spacy.load(experiment["language"], disable=["ner", "pos", "parser"])
 
@@ -86,19 +90,18 @@ def load_data(experiment):
             sentences_preprocessed = [preprocess(sentence, experiment, nlp) for sentence in sentences]
         except:
             sentences_preprocessed = []
-        log.info("writing preprocessed training set file")
-        with open(training_preprocessed_file, "w") as fo:
+        log.info("writing preprocessed {0} set file".format(set))
+        with open(preprocessed_file, "w") as fo:
             for sentence_preprocessed, label in zip(sentences_preprocessed, labels):
-
                 fo.write("<label>{0}\n".format(label))
                 for token in sentence_preprocessed:
                     fo.write("{0}\n".format(token))
                 fo.write("\n")
 
+    # transform the sentences into vectors
     log.info("vectorization")
     tokenizer = Tokenizer(filters='', lower=True, split=' ')
     tokenizer.fit_on_texts(sentences_preprocessed)
-    #sequences = tokenizer.texts_to_sequences(sentences_preprocessed)
     word_index = tokenizer.word_index
 
     if experiment["wordrepresentation"] == 'tfidf':
@@ -106,12 +109,54 @@ def load_data(experiment):
         X_data = pad_sequences(X_data, 8000, padding='post', truncating='post')
     elif experiment["wordrepresentation"] == 'embedding':
         X_data = tokenizer.texts_to_sequences(sentences_preprocessed)
-        X_data = pad_sequences(X_data, 140)
-
-
+        X_data = pad_sequences(X_data, experiment['max_length'])
 
     encoder = LabelBinarizer()
     encoder.fit(labels)
     y_data = to_categorical(encoder.transform(labels))
 
-    return X_data, y_data, word_index
+    return X_data, y_data, word_index, labels
+
+
+def load_data(experiment):
+    data_dir = os.path.join(conf["data_dir"], experiment["data"])
+    training_file = os.path.join(data_dir, "train.tsv")
+    test_file = os.path.join(data_dir, "test.tsv")
+
+    if not os.path.isfile(training_file):
+        log.error("cannot find training file {0}, exiting".format(training_file))
+        sys.exit(0)
+
+    print (test_file, os.path.isfile(test_file))
+    if os.path.isfile(test_file):
+        log.error("reading training and test set")
+        X_train, y_train, word_index, labels = read_data_file(experiment, "train")
+        X_test, y_test, _, labels = read_data_file(experiment, "test")
+    else:
+        log.error("reading training set and splitting")
+        X_data, y_data, word_index, labels = read_data_file(experiment, "train")
+        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=seed)
+
+    return X_train, X_test, y_train, y_test, word_index, labels
+
+def load_embeddings(experiment, word_index):
+    log.info("loading embeddings")
+    embeddings_index = {}
+    f = open('embeddings/{0}'.format(experiment["embedding_file"]))
+    for line in f:
+        values = line.strip().split()
+        if len(values)<=2:
+            continue
+        word = " ".join(values[:-experiment['embedding_dimension']])
+        coefs = np.asarray(values[-experiment['embedding_dimension']:], dtype='float32')
+        embeddings_index[word.lower().strip()] = coefs
+    f.close()
+
+    embedding_matrix = np.zeros((len(word_index) + 1, 300))
+    for word, i in word_index.items():
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None:
+            # words not found in embedding index will be all-zeros.
+            embedding_matrix[i] = embedding_vector
+
+    return embedding_matrix
