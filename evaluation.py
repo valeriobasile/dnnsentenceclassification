@@ -16,15 +16,17 @@ def precision_recall(pred, gold, c):
     fscore = (precision * recall * 2.0) / (precision + recall)
     return precision, recall, fscore
 
-def evaluate_model(model, X_test, y_test, labels):
+def evaluate_model(model, X_test, y_test):
     score = model.evaluate(X_test, y_test,
                                batch_size=100, verbose=1)
     pred = model.predict_classes(X_test)
     gold = [np.argmax(i) for i in y_test]
 
-    p0, r0, f0 = precision_recall(pred, gold, 0)
-    p1, r1, f1 = precision_recall(pred, gold, 1)
-    macrof = (f0+f1)/2.0
-    print (p0, p1, r0, r1, f0, f1)
+    macrof = 0.0
+    for label in np.unique(y_test):
+        p, r, f = precision_recall(pred, gold, label)
+        macrof += f
+        print ("{0}: p={1:.3f}, r={2:.3f}, f={3:.3f}".format(label, p, r, f))
+    macrof /= len(np.unique(y_test))
     print ("macro F1-score: {0:.3f}".format(macrof))
     print ("accuracy: {0:.3f}".format(score[1]))

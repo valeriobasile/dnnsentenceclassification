@@ -5,7 +5,7 @@ import logging as log
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
 from sklearn.model_selection import train_test_split
 import numpy as np
 
@@ -112,10 +112,12 @@ def read_data_file(experiment, set):
         X_data = pad_sequences(X_data, experiment['max_length'])
 
     encoder = LabelBinarizer()
+    #encoder = OneHotEncoder()
     encoder.fit(labels)
+    y_data = encoder.transform(labels)
     y_data = to_categorical(encoder.transform(labels))
 
-    return X_data, y_data, word_index, labels
+    return X_data, y_data, word_index
 
 
 def load_data(experiment):
@@ -130,14 +132,14 @@ def load_data(experiment):
     print (test_file, os.path.isfile(test_file))
     if os.path.isfile(test_file):
         log.error("reading training and test set")
-        X_train, y_train, word_index, labels = read_data_file(experiment, "train")
-        X_test, y_test, _, labels = read_data_file(experiment, "test")
+        X_train, y_train, word_index = read_data_file(experiment, "train")
+        X_test, y_test, _ = read_data_file(experiment, "test")
     else:
         log.error("reading training set and splitting")
-        X_data, y_data, word_index, labels = read_data_file(experiment, "train")
+        X_data, y_data, word_index = read_data_file(experiment, "train")
         X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=seed)
 
-    return X_train, X_test, y_train, y_test, word_index, labels
+    return X_train, X_test, y_train, y_test, word_index
 
 def load_embeddings(experiment, word_index):
     log.info("loading embeddings")

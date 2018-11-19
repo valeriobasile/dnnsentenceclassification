@@ -16,7 +16,7 @@ except:
     log.error("experiment \"{0}\" does not exist".format(sys.argv[1]))
     sys.exit(1)
 
-X_train, X_test, y_train, y_test, word_index, labels = load_data(experiment)
+X_train, X_test, y_train, y_test, word_index = load_data(experiment)
 
 if "embedding_file" in experiment:
     embedding_matrix = load_embeddings(experiment, word_index)
@@ -25,4 +25,4 @@ else:
     model = create_model(experiment, X_train, y_train, word_index=word_index)
 
 model = train_model(model, X_train, y_train)
-evaluate_model(model, X_test, y_test, labels)
+evaluate_model(model, X_test, y_test)
