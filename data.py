@@ -154,7 +154,7 @@ def load_embeddings(experiment, word_index):
         embeddings_index[word.lower().strip()] = coefs
     f.close()
 
-    embedding_matrix = np.zeros((len(word_index) + 1, 300))
+    embedding_matrix = np.zeros((len(word_index) + 1, experiment['embedding_dimension']))
     for word, i in word_index.items():
         embedding_vector = embeddings_index.get(word)
         if embedding_vector is not None:
