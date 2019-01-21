@@ -11,6 +11,7 @@ cymem==2.0.2
 cytoolz==0.9.0.1
 dill==0.2.8.2
 docutils==0.14
+en-core-web-sm==2.0.0
 gast==0.2.0
 gensim==3.6.0
 grpcio==1.16.0
@@ -22,6 +23,7 @@ jmespath==0.9.3
 Keras==2.2.4
 Keras-Applications==1.0.6
 Keras-Preprocessing==1.0.5
+keras-self-attention==0.32.0
 Markdown==3.0.1
 msgpack==0.5.6
 msgpack-numpy==0.4.3.2
@@ -42,8 +44,8 @@ six==1.11.0
 sklearn==0.0
 smart-open==1.7.1
 spacy==2.0.16
-tensorboard==1.11.0
-tensorflow==1.5.0
+tensorboard==1.12.2
+tensorflow==1.12.0
 tensorflow-tensorboard==1.5.1
 termcolor==1.1.0
 thinc==6.12.0
