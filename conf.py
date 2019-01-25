@@ -4,6 +4,7 @@ conf = {
 
 input_dimensions = {
     "lstm": 2,
+    "mlp": 2,
     "svm": 1
 }
 
@@ -14,16 +15,6 @@ experiments = {
         "model": "lstm",
         "preprocess": "lemma",
         "wordrepresentation": "embedding",
-        "embedding_dimension": 300,
-        "embedding_file": "wiki.it.vec",
-        "max_length": 100},
-    "jad": {
-        "data": "jad_bin",
-        "language": "it",
-        "model": "lstm",
-        "preprocess": "lemma",
-        "wordrepresentation": "embedding",
-        "embedding_dimension": 300,
-        "embedding_file": "wiki.it.vec",
+        "embedding_dimension": 100,
         "max_length": 100}
 }
