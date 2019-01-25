@@ -35,7 +35,7 @@ def get_embedding_layer(experiment, word_index, embedding_matrix=None):
             len(word_index)+1,
             experiment["embedding_dimension"],
             weights=[embedding_matrix],
-            trainable=False,
+            trainable=experiment["embedding_trainable"],
             input_length=experiment["max_length"])
     else:
         return Embedding(
@@ -46,31 +46,34 @@ def get_embedding_layer(experiment, word_index, embedding_matrix=None):
 def create_model(experiment, X_train, y_train, embedding_matrix=None, word_index=None):
     model = Sequential()
 
-    if experiment["model"] == "nn":
-        model.add(Dense(1000, input_shape=(X_train.shape[1],)))
+    if experiment["model"] == "mlp":
+        model.add(Dense(50, input_shape=(X_train.shape[1],)))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(500))
+        model.add(Dense(25))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        #model.add(ActivityRegularization(l1=0.001, l2=0.0001))
+        if 'regularization' in experiment and experiment['regularization']:
+            model.add(ActivityRegularization(l1=0.001, l2=0.0001))
         model.add(Dense(y_train.shape[1], activation='softmax'))
     elif experiment["model"] == "lstm":
         model.add(get_embedding_layer(experiment, word_index, embedding_matrix=embedding_matrix))
         model.add(Bidirectional(LSTM(128, return_sequences=True)))
         model.add(Dropout(0.5))
-        model.add(SeqSelfAttention(
-        attention_width=15,
-        attention_type=SeqSelfAttention.ATTENTION_TYPE_MUL,
-        attention_activation=None,
-        kernel_regularizer=regularizers.l2(1e-6),
-        use_attention_bias=False,
-        attention_regularizer_weight=1e-4,
-        name='Attention',
-        ))
+        if 'attention' in experiment and experiment['attention']:
+            model.add(SeqSelfAttention(
+            attention_width=15,
+            attention_type=SeqSelfAttention.ATTENTION_TYPE_MUL,
+            attention_activation=None,
+            kernel_regularizer=regularizers.l2(1e-6),
+            use_attention_bias=False,
+            attention_regularizer_weight=1e-4,
+            name='Attention',
+            ))
         model.add(Bidirectional(LSTM(64)))
         model.add(Dropout(0.5))
-        model.add(ActivityRegularization(l1=0.001, l2=0.0001))
+        if 'regularization' in experiment and experiment['regularization']:
+            model.add(ActivityRegularization(l1=0.001, l2=0.0001))
         model.add(Dense(y_train.shape[1], activation='softmax'))
 
     model.summary()
@@ -86,7 +89,7 @@ def train_model(model, X_train, y_train):
                                                  np.unique(y_ints),
                                                  y_ints)
     history = model.fit(X_train, y_train,
-                            batch_size=100,
+                            #batch_size=100,
                             epochs=100,
                             verbose=1,
                             callbacks=callbacks,
