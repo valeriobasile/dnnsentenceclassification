@@ -4,7 +4,7 @@ conf = {
 
 input_dimensions = {
     "lstm": 2,
-    "mlp": 2,
+    "mlp": 1,
     "svm": 1
 }
 
