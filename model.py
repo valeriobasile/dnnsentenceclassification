@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Activation, ActivityRegularization, Embedding, Dense, Bidirectional, Dropout, Flatten, LSTM, Conv1D, Conv2D, MaxPooling2D, GRU
+from keras.layers import Activation, ActivityRegularization, Embedding, Dense, Bidirectional, Dropout, Flatten, LSTM, Conv1D, Conv2D, MaxPooling1D, MaxPooling2D, GRU
 from keras.callbacks import EarlyStopping
 from sklearn.utils import class_weight
 import numpy as np
@@ -74,6 +74,17 @@ def create_model(experiment, X_train, y_train, embedding_matrix=None, word_index
         model.add(Dropout(0.5))
         if 'regularization' in experiment and experiment['regularization']:
             model.add(ActivityRegularization(l1=0.001, l2=0.0001))
+        model.add(Dense(y_train.shape[1], activation='softmax'))
+    elif experiment["model"] == "cnn":
+        model.add(get_embedding_layer(experiment, word_index, embedding_matrix=embedding_matrix))
+        model.add(Dropout(0.2))
+        model.add(Conv1D(128, 8, activation='relu'))
+        model.add(MaxPooling1D(pool_size=4))
+        model.add(Conv1D(64, 8, activation='relu'))
+        model.add(MaxPooling1D(pool_size=4))
+        model.add(Flatten())
+        if 'regularization' in experiment and experiment['regularization']:
+            model.add(ActivityRegularization(l1=0.0001, l2=0.00001))
         model.add(Dense(y_train.shape[1], activation='softmax'))
 
     model.summary()
