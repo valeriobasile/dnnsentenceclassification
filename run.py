@@ -26,3 +26,6 @@ else:
 
 model = train_model(model, X_train, y_train)
 evaluate_model(model, X_test, y_test)
+#pred = model.predict_classes(X_test)
+# for p in pred:
+#     print (p)

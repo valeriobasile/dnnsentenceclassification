@@ -18,7 +18,7 @@ def precision_recall(pred, gold, c):
 
 def evaluate_model(model, X_test, y_test):
     score = model.evaluate(X_test, y_test,
-                               batch_size=100, verbose=1)
+                               batch_size=100, verbose=0)
     pred = model.predict_classes(X_test)
     gold = [np.argmax(i) for i in y_test]
 

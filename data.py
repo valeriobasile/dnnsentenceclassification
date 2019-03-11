@@ -5,7 +5,7 @@ import logging as log
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
+from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, LabelEncoder
 from sklearn.model_selection import train_test_split
 import numpy as np
 
@@ -31,7 +31,7 @@ def build_vocabulary(sentences_preprocessed, experiment):
 
 def read_file(data_file):
     try:
-        f = open(data_file)
+        f = open(data_file, encoding="latin1")
     except:
         log.error("cannot open file: {0}".format(data_file))
         return None, None
@@ -111,11 +111,11 @@ def read_data_file(experiment, set):
         X_data = tokenizer.texts_to_sequences(sentences_preprocessed)
         X_data = pad_sequences(X_data, experiment['max_length'])
 
-    encoder = LabelBinarizer()
-    #encoder = OneHotEncoder()
+    labels = np.array(labels)
+    encoder = LabelEncoder()
     encoder.fit(labels)
     y_data = encoder.transform(labels)
-    y_data = to_categorical(encoder.transform(labels))
+    y_data = to_categorical(y_data)
 
     return X_data, y_data, word_index
 
@@ -129,7 +129,6 @@ def load_data(experiment):
         log.error("cannot find training file {0}, exiting".format(training_file))
         sys.exit(0)
 
-    print (test_file, os.path.isfile(test_file))
     if os.path.isfile(test_file):
         log.error("reading training and test set")
         X_train, y_train, word_index = read_data_file(experiment, "train")
@@ -160,5 +159,8 @@ def load_embeddings(experiment, word_index):
         if embedding_vector is not None:
             # words not found in embedding index will be all-zeros.
             embedding_matrix[i] = embedding_vector
+        #else:
+        #    print (word)
+
 
     return embedding_matrix
