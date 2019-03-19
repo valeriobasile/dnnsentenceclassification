@@ -13,7 +13,10 @@ def precision_recall(pred, gold, c):
     else:
         recall = 0.0
 
-    fscore = (precision * recall * 2.0) / (precision + recall)
+    try:
+        fscore = (precision * recall * 2.0) / (precision + recall)
+    except:
+        fscore = 0.0
     return precision, recall, fscore
 
 def evaluate_model(model, X_test, y_test):
