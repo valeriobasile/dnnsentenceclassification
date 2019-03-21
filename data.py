@@ -8,6 +8,7 @@ from keras.utils import to_categorical
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, LabelEncoder
 from sklearn.model_selection import train_test_split
 import numpy as np
+from imblearn.over_sampling import SMOTE
 
 seed = 7
 np.random.seed(seed)
@@ -115,8 +116,11 @@ def read_data_file(experiment, set):
     encoder = LabelEncoder()
     encoder.fit(labels)
     y_data = encoder.transform(labels)
-    y_data = to_categorical(y_data)
 
+    sm = SMOTE(random_state=42)
+    X_data, y_data = sm.fit_resample(X_data, y_data)
+
+    y_data = to_categorical(y_data)
     return X_data, y_data, word_index
 
 

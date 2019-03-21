@@ -106,8 +106,8 @@ def create_model(experiment, X_train, y_train, embedding_matrix=None, word_index
         model.add(ActivityRegularization(l1=0.001, l2=0.0001))
     model.add(Dense(y_train.shape[1], activation="softmax"))
 
-    model.summary()
-    opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+    #model.summary()
+    opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
     model.compile(loss="categorical_crossentropy",
                       optimizer=opt,
                       metrics=["accuracy"])
@@ -120,12 +120,12 @@ def train_model(model, X_train, y_train):
                                                  np.unique(y_ints),
                                                  y_ints)
     history = model.fit(X_train, y_train,
-                            batch_size=256,
-                            epochs=20,
+                            batch_size=32,
+                            epochs=10,
                             shuffle=True,
-                            verbose=1,
-                            callbacks=callbacks,
-                            validation_split=0.05,
+                            verbose=0,
+                            #callbacks=callbacks,
+                            #validation_split=0.1,
                             class_weight=class_weights
                             )
     return model
